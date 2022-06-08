@@ -1,4 +1,7 @@
-﻿using System;
+﻿extern alias Aero2;
+extern alias Classic;
+extern alias Luna;
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -20,6 +23,12 @@ namespace BabySmash
 
         public App()
         {
+            System.Threading.Thread.CurrentThread.SetApartmentState(System.Threading.ApartmentState.STA);
+            new Aero2::Microsoft.Windows.Themes.SystemDropShadowChrome();
+            new Classic::Microsoft.Windows.Themes.SystemDropShadowChrome();
+            new Luna::Microsoft.Windows.Themes.SystemDropShadowChrome();
+            new System.Windows.Controls.KeyTipControl();
+            new System.Windows.Forms.Integration.ChildChangedEventArgs(new object());
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
             Application.Current.Exit += new ExitEventHandler(Current_Exit);
             try

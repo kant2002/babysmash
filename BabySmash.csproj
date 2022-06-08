@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net7.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
     <ManifestCertificateThumbprint>E4355A6B46BE61300D217B56C346651E03BEB47F</ManifestCertificateThumbprint>
     <ManifestKeyFile>private.pfx</ManifestKeyFile>
@@ -27,7 +27,19 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
+    <DisableImplicitNamespaceImports>true</DisableImplicitNamespaceImports>
+    <_SuppressWpfTrimError>true</_SuppressWpfTrimError>
+    <_SuppressWinFormsTrimError>true</_SuppressWinFormsTrimError>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+    <PlatformTarget>x64</PlatformTarget>
+    <!-- Set path to locally built WPF repo-->
+    <WpfRepoRoot></WpfRepoRoot>
   </PropertyGroup>
+
+  <ItemGroup>
+    <RdXmlFile Include="rd.xml" />
+  </ItemGroup>
+
   <ItemGroup>
     <Reference Update="System.Core"/>
     <Reference Include="System.Speech" />
@@ -89,6 +101,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.2" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-*" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Properties\Settings.Designer.cs">
@@ -97,4 +110,96 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
   </ItemGroup>
+
+  <Import Project="$(WpfRepoRoot)\eng\wpf-debug.targets" Condition="'$(WpfRepoRoot)' != ''" />
+
+  <ItemGroup>
+    <Reference Remove="$(WPFArtifactsPath)\lib\*\System.Printing.dll" />
+    <Reference Remove="$(WPFArtifactsPath)\lib\*\ReachFramework.dll" />
+    <Reference Remove="*\WindowsFormsIntegration.dll" />
+    <Reference Remove="*\System.Windows.Controls.Ribbon.dll" />
+  </ItemGroup>
+
+  <!-- 
+    Usage:
+      To reference a specific WPF theme assembly, set one or more of these properties to true.
+      If no property is set to true, then all theme assemblies are referenced (default). 
+      
+      Setting one property to 'true' implies that other properties are 'false' by default (unless they are 
+      explicitly set to true). 
+      
+       <PropertyGroup>
+          <ReferenceWpfAeroTheme>true</ReferenceWpfAeroTheme>
+          <ReferenceWpfAero2Theme>true</ReferenceWpfAero2Theme>
+          <ReferenceWpfAeroLiteTheme>true</ReferenceWpfAeroLiteTheme>
+          <ReferenceWpfClassicTheme>true</ReferenceWpfClassicTheme>
+          <ReferenceWpfLunaTheme>true</ReferenceWpfLunaTheme>
+          <ReferenceWpfRoyaleTheme>true</ReferenceWpfRoyaleTheme>
+       </PropertyGroup>
+     
+     Advanced Usage:
+      To reference more than one theme assembly at the same time, use an 'alias' 
+        See 'Aliases' in the documentation for [MSBuild Reference element](https://docs.microsoft.com/en-us/visualstudio/msbuild/common-msbuild-project-items?view=vs-2019)
+        and the [C# compiler commandline documentation for -reference](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-options/reference-compiler-option)
+      
+      This only works in C#. 
+      
+      
+  -->
+  <PropertyGroup>
+    <ReferenceWpfAeroTheme>false</ReferenceWpfAeroTheme>
+    <ReferenceWpfAero2Theme>true</ReferenceWpfAero2Theme>
+    <ReferenceWpfAeroLiteTheme>false</ReferenceWpfAeroLiteTheme>
+    <ReferenceWpfClassicTheme>true</ReferenceWpfClassicTheme>
+    <ReferenceWpfLunaTheme>true</ReferenceWpfLunaTheme>
+    <ReferenceWpfRoyaleTheme>false</ReferenceWpfRoyaleTheme>
+  </PropertyGroup>
+  <PropertyGroup>
+    <WpfAeroThemeAliases>Aero</WpfAeroThemeAliases>
+    <WpfAero2ThemeAliases>Aero2</WpfAero2ThemeAliases>
+    <WpfAeroLiteThemeAliases>AeroLite</WpfAeroLiteThemeAliases>
+    <WpfClassicThemeAliases>Classic</WpfClassicThemeAliases>
+    <WpfLunaThemeAliases>Luna</WpfLunaThemeAliases>
+    <WpfRoyaleThemeAliases>Royale</WpfRoyaleThemeAliases>
+  </PropertyGroup>
+
+  <Target Name="SelectWpfThemeAssembly" AfterTargets="ResolveAssemblyReferences" Condition="'$(ReferenceWpfAeroTheme)' == 'true'     Or&#xD;&#xA;                     '$(ReferenceWpfAero2Theme)' == 'true'    Or&#xD;&#xA;                     '$(ReferenceWpfAeroLiteTheme)' == 'true' Or&#xD;&#xA;                     '$(ReferenceWpfClassicTheme)' == 'true'  Or &#xD;&#xA;                     '$(ReferenceWpfLunaTheme)' == 'true'     Or&#xD;&#xA;                     '$(ReferenceWpfRoyaleTheme)' == 'true'">
+    <ItemGroup>
+      <_WpfThemeAssemblies Include="@(ReferencePath)" Condition="'%(ReferencePath.FileName)'=='PresentationFramework.Aero'">
+        <Aliases Condition="'$(WpfAeroThemeAliases)'!=''">$(WpfAeroThemeAliases)</Aliases>
+      </_WpfThemeAssemblies>
+
+      <_WpfThemeAssemblies Include="@(ReferencePath)" Condition="'%(ReferencePath.FileName)'=='PresentationFramework.Aero2'">
+        <Aliases Condition="'$(WpfAero2ThemeAliases)'!=''">$(WpfAero2ThemeAliases)</Aliases>
+      </_WpfThemeAssemblies>
+
+      <_WpfThemeAssemblies Include="@(ReferencePath)" Condition="'%(ReferencePath.FileName)'=='PresentationFramework.AeroLite'">
+        <Aliases Condition="'$(WpfAeroLiteThemeAliases)'!=''">$(WpfAeroLiteThemeAliases)</Aliases>
+      </_WpfThemeAssemblies>
+
+      <_WpfThemeAssemblies Include="@(ReferencePath)" Condition="'%(ReferencePath.FileName)'=='PresentationFramework.Classic'">
+        <Aliases Condition="'$(WpfClassicThemeAliases)'!=''">$(WpfClassicThemeAliases)</Aliases>
+      </_WpfThemeAssemblies>
+
+      <_WpfThemeAssemblies Include="@(ReferencePath)" Condition="'%(ReferencePath.FileName)'=='PresentationFramework.Luna'">
+        <Aliases Condition="'$(WpfLunaThemeAliases)'!=''">$(WpfLunaThemeAliases)</Aliases>
+      </_WpfThemeAssemblies>
+
+
+      <_WpfThemeAssemblies Include="@(ReferencePath)" Condition="'%(ReferencePath.FileName)'=='PresentationFramework.Royale'">
+        <Aliases Condition="'$(WpfRoyaleThemeAliases)'!=''">$(WpfRoyaleThemeAliases)</Aliases>
+      </_WpfThemeAssemblies>
+
+
+      <ReferencePath Remove="@(_WpfThemeAssemblies)" />
+
+      <ReferencePath Include="@(_WpfThemeAssemblies)"
+                     Condition="('%(_WpfThemeAssemblies.FileName)'=='PresentationFramework.Aero' And '$(ReferenceWpfAeroTheme)'=='true') 
+                      Or ('%(_WpfThemeAssemblies.FileName)'=='PresentationFramework.Aero2' And '$(ReferenceWpfAero2Theme)'=='true')
+                      Or ('%(_WpfThemeAssemblies.FileName)'=='PresentationFramework.AeroLite' And '$(ReferenceWpfAeroLiteTheme)'=='true')  
+                      Or ('%(_WpfThemeAssemblies.FileName)'=='PresentationFramework.Classic' And '$(ReferenceWpfClassicTheme)'=='true')    
+                      Or ('%(_WpfThemeAssemblies.FileName)'=='PresentationFramework.Luna' And '$(ReferenceWpfLunaTheme)'=='true')
+                      Or ('%(_WpfThemeAssemblies.FileName)'=='PresentationFramework.Royale' And '$(ReferenceWpfRoyaleTheme)'=='true')" />
+    </ItemGroup>
+  </Target>
 </Project>
